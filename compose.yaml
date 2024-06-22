@@ -1,0 +1,90 @@
+services:
+  rproxy:
+    networks:
+      default:
+        aliases:
+          - idp.aimerzarashi.com
+          - web.aimerzarashi.com
+    image: traefik:v3.0
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./rproxy:/etc/traefik:ro
+      - ./logs:/etc/logs
+    environment:
+      - TZ=Asia/Tokyo
+    command:
+      - --accesslog.fields.names.StartUTC=drop
+      - --providers.docker
+  whoami:
+    image: traefik/whoami
+    command:
+      - --name=whoami
+      - --port=443
+      - --cert=/certs/server.pem
+      - --key=/certs/server.key
+      - --cacert=/certs/rootCA.pem
+    volumes:
+      - ./certs/self/all:/certs
+  web:
+    image: node:20-alpine3.18
+    ports:
+      - 3000:3000
+    depends_on:
+      - idp
+    volumes:
+      - ./web:/app
+    tty: true
+    working_dir: /app
+    command:
+      - "sh"
+      - "-c"
+      - |
+        npm install;
+        npm run dev;
+  idp:
+    image: keycloak/keycloak:25.0
+    environment:
+      # KC_LOG_LEVEL: info,org.keycloak.authentication:trace
+      KEYCLOAK_ADMIN: user
+      KEYCLOAK_ADMIN_PASSWORD: bitnami
+      KC_DB: postgres
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_HOST: db
+      KC_DB_URL_DATABASE: bitnami_keycloak
+      KC_DB_PASSWORD: password
+      KC_DB_USERNAME: bn_keycloak
+      KC_HOSTNAME: idp.aimerzarashi.com
+      KC_HTTP_ENABLED: false
+      # KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: false
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTPS_CLIENT_AUTH: request
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/certs/server.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/certs/server.key
+    command:
+      - "start"
+    volumes:
+      - ./idp/certs:/opt/keycloak/conf/certs
+      - ./idp/truststores:/opt/keycloak/conf/truststores
+    depends_on:
+      - db
+      - smtp
+  db:
+    container_name: db
+    image: postgres:16.3
+    ports:
+      - 5432:5432
+    restart: always
+    environment:
+      POSTGRES_USER: bn_keycloak
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bitnami_keycloak
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+  smtp:
+    image: mailhog/mailhog
+    ports:
+      - 1025:1025
