@@ -32,3 +32,15 @@ accessLog:
         User-Agent: redact
         Authorization: drop
         Content-Type: keep
+
+metrics:
+  otlp:
+    grpc:
+      endpoint: otelcol:4317
+      insecure: true
+
+tracing:
+  otlp:
+    grpc:
+      endpoint: jaeger:14317
+      insecure: true
