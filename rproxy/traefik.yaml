@@ -42,5 +42,5 @@ metrics:
 tracing:
   otlp:
     grpc:
-      endpoint: jaeger:14317
+      endpoint: otelcol:4317
       insecure: true

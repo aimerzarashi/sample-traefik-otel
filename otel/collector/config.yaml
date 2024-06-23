@@ -9,15 +9,15 @@ receivers:
 exporters:
   logging:
 
-  prometheus:
-    endpoint: prometheus:8889
-    const_labels:
-      label1: value1
-
   otlp:
     endpoint: jaeger:14317
-    # tls:
-    #   insecure: true
+    tls:
+      insecure: true
+
+  otlphttp/prometheus:
+    endpoint: "http://prometheus:9090/api/v1/otlp"
+    tls:
+      insecure: true
 
 processors:
   batch:
@@ -39,4 +39,4 @@ service:
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging, prometheus]
+      exporters: [logging, otlphttp/prometheus]
