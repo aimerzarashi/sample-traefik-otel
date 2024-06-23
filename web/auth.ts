@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
+import Keycloak from "next-auth/providers/keycloak";
 import { AdapterSession } from "@auth/core/adapters";
 import { Awaitable } from "@auth/core/types";
-import Keycloak from "next-auth/providers/keycloak";
 import { JWT } from "@auth/core/jwt";
 
 type Account = {

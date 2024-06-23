@@ -101,18 +101,23 @@ services:
       - 4317:4317 # OTLP gRPC receiver
       - 4318:4318 # OTLP http receiver
       - 55679:55679 # zpages extension
+    depends_on:
+      - jaeger
+      - prometheus
+      - grafana
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
       - 16686:16686
-      - 14317:4317
+      - 4317
     command:
       - "--memory.max-traces=5000"
       - "--query.base-path=/jaeger/ui"
-      - "--collector.otlp.enabled=true"
-      - "--collector.otlp.grpc.host-port=:14317"
+      - "--prometheus.server-url=http://prometheus:9090"
+      - "--prometheus.query.normalize-calls=true"
+      - "--prometheus.query.normalize-duration=true"
     environment:
-      SPAN_STORAGE_TYPE: memory
+      METRICS_STORAGE_TYPE: prometheus
   prometheus:
     image: prom/prometheus
     ports:
@@ -132,4 +137,4 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - 9000:3000
+      - 13000:3000

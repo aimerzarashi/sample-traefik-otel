@@ -70,6 +70,7 @@ http:
       rule: "Host(`smtp.aimerzarashi.com`)"
       service: smtp
       tls: {}
+
   services:
     whoami:
       loadBalancer:
