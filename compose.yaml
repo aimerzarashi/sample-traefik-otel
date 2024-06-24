@@ -109,6 +109,7 @@ services:
     image: jaegertracing/all-in-one:latest
     ports:
       - 16686:16686
+      - 14269:14269
       - 4317
     command:
       - "--memory.max-traces=5000"
@@ -133,8 +134,25 @@ services:
       - --enable-feature=exemplar-storage
       - --enable-feature=otlp-write-receiver
     volumes:
-      - ./prom/config/config.yaml:/etc/prometheus/config.yaml:ro
+      - ./prom/prometheus/config.yaml:/etc/prometheus/config.yaml:ro
+  alertmanager:
+    image: prom/alertmanager
+    container_name: alertmanager
+    volumes:
+      - ./prom/alertmanager:/etc/alertmanager
+    command: "--config.file=/etc/alertmanager/config.yaml"
+    ports:
+      - 9093:9093
+    depends_on:
+      - prometheus
   grafana:
     image: grafana/grafana
     ports:
       - 13000:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
